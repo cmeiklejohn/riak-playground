@@ -1,44 +1,40 @@
 package com.basho.riak.playground;
 
+import java.net.UnknownHostException;
+
 import com.basho.riak.client.api.RiakClient;
 import com.basho.riak.client.core.RiakCluster;
 import com.basho.riak.client.core.RiakNode;
 
-import java.net.UnknownHostException;
-import java.util.LinkedList;
-import java.util.List;
-
 public class Main {
-    public static void main(String[] args) throws Exception {
-        try {
-            RiakCluster cluster = setUpCluster();
-            RiakClient client = startRiak(cluster);
+	private static RiakClient client;
+    private static RiakCluster cluster;
+    
 
-            /* start */
+	public static void setup() throws UnknownHostException {
+		
+		RiakNode node = new RiakNode.Builder().withRemoteAddress("127.0.0.1")
+				.withRemotePort(10017).build();
+		cluster = new RiakCluster.Builder(node).build();
+		client = new RiakClient(cluster);
+		cluster.start(); 
+	}
+	
+	public static void main(String[] args) {
+		try {
+			setup();
+			User bob = new User("Bob", "Builder",client);
+			System.out.println(bob.getLastName() + "," + bob.getFirstName());
+			shutdown();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		
+	}
 
-            // Do some Riak stuff here
+	private static void shutdown() {
+		//cluster.shutdown();
+	}
 
-            /* end */
-
-            cluster.shutdown();
-        } catch (UnknownHostException e) {
-            throw new Exception(e);
-        }
-    }
-
-    public static RiakCluster setUpCluster() throws UnknownHostException {
-        List<RiakNode> nodes = new LinkedList<RiakNode>();
-        RiakNode.Builder nodeBuilder = new RiakNode.Builder()
-                .withRemoteAddress("127.0.0.1");
-        for (int port = 10017; port <= 10037; port += 10) {
-            RiakNode node = nodeBuilder.withRemotePort(port).build();
-            nodes.add(node);
-        }
-        return new RiakCluster.Builder(nodes).build();
-    }
-
-    public static RiakClient startRiak(RiakCluster cluster) {
-        cluster.start();
-        return new RiakClient(cluster);
-    }
 }
